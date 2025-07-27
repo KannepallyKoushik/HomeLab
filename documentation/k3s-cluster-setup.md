@@ -48,3 +48,5 @@ Brief description of the cluster purpose and architecture.
 ## References
 - Official documentation
 - Useful guides and resources
+
+*Last Updated: July 20, 2025*

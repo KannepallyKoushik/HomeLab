@@ -47,3 +47,5 @@ Brief description of your homelab and its purpose.
 
 ## References
 - Links to guides,
+
+*Last Updated: July 20, 2025*
