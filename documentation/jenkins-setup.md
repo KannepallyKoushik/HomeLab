@@ -248,4 +248,49 @@ sudo journalctl -u jenkins-agent -f
 - Configure node-specific build environments (Docker, specific tools)
 - Implement node monitoring and alerting
 
+
+#### Manual Host Configuration (Current Implementation)
+
+Since `jenkins.local` is not automatically resolvable in the local network, manual DNS mapping is required on each machine that needs access to Jenkins.
+
+**Steps for each machine:**
+```bash
+# Get the external IP of the ingress service
+kubectl get svc -n kube-system traefik
+
+# Edit /etc/hosts file
+sudo nano /etc/hosts
+
+# Add the following line (replace INGRESS_IP with actual IP)
+INGRESS_IP    jenkins.local
+```
+
+**Current Limitations:**
+- Manual configuration required on every machine in the local network
+- Must update `/etc/hosts` files when ingress IP changes
+- No automatic service discovery for new services
+- Maintenance overhead for multiple machines
+
+**Example Configuration:**
+```bash
+# /etc/hosts entry example
+192.168.1.100    jenkins.local
+```
+
+#### Future DNS Integration
+
+The manual `/etc/hosts` configuration is a temporary solution. A local DNS server (planned implementation with Bind9) will provide:
+
+- **Automatic Resolution**: All machines use the DNS server without manual configuration
+- **Load Balancing**: DNS server can distribute requests across multiple ingress IPs
+- **Service Discovery**: New services automatically available to all network machines
+- **Centralized Management**: Single point of configuration for all local services
+- **Dynamic Updates**: Automatic handling of IP changes without manual intervention
+
+**Planned Migration Path:**
+1. Deploy Bind9 DNS server (documented in `local-dns-server-setup.md`)
+2. Configure router to use local DNS server
+3. Remove manual `/etc/hosts` entries from all machines
+4. Enable automatic service discovery for the entire local network
+
 *Last Updated: July 27, 2025*
