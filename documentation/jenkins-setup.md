@@ -175,11 +175,12 @@ Jenkins has been configured with worker nodes to enable distributed builds acros
 
    ```bash
    # Download the Jenkins agent JAR file
+   cd /opt/jenkins-agent/
    curl -sO http://jenkins.local/jnlpJars/agent.jar
    
    # Create secret file with the node secret from Jenkins
    # (Secret string is provided in Jenkins node configuration page)
-   echo "YOUR_SECRET_STRING" > /var/jenkins/secret-file
+   echo "YOUR_SECRET_STRING" > /opt/jenkins-agent/secret-file
    ```
 
 3. **Systemd Service Configuration**
