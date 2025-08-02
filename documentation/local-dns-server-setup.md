@@ -54,6 +54,7 @@ services:
       - ./cache:/var/cache/bind
       - ./records:/var/lib/bind
     restart: unless-stopped
+```
 
 #### Docker Run Command
 ```bash
@@ -151,8 +152,10 @@ ci              IN  CNAME   jenkins.home.kannepally.me.
 - Automatically received DNS configuration via DHCP from router
 - No manual configuration required
 
+> [!IMPORTANT] 
+>While the TP-Link router DNS configuration was automatically applied to Windows and macOS machines via DHCP, Ubuntu servers continued using `systemd-resolved` which listens on `127.0.0.53:53`, bypassing the router's DNS settings.
 #### Ubuntu Servers - Standard Configuration
-For most Ubuntu servers, modified `/etc/systemd/resolved.conf`:
+For all Ubuntu servers, modify `/etc/systemd/resolved.conf`:
 
 ```conf
 [Resolve]
@@ -169,12 +172,15 @@ sudo systemctl restart systemd-resolved
 
 #### Ubuntu DNS Server Host (k-worker2-large) - Special Configuration
 The machine hosting the Bind9 container requires special configuration to avoid port conflicts:
+**Problem**: DNSStubListener conflicts with Bind9 container port binding
+**Solution**: 
+1. Set `DNSStubListener=no` in `/etc/systemd/resolved.conf`
+2. Point DNS to localhost (`127.0.0.1`) since Bind9 runs locally
+3. Update `/etc/resolv.conf` to use the actual DNS resolver
 
 **Modified `/etc/systemd/resolved.conf`:**
 ```conf
 [Resolve]
-DNS=127.0.0.1 1.1.1.1
-FallbackDNS=8.8.8.8
 DNSStubListener=no
 Domains=home.kannepally.me
 ```
@@ -199,37 +205,6 @@ nameserver 89.101.251.228
 options edns0 trust-ad
 search home.kannepally.me
 ```
-
-## Issues Encountered and Solutions
-
-### Ubuntu systemd-resolved Conflicts
-
-#### Problem
-While the TP-Link router DNS configuration was automatically applied to Windows and macOS machines via DHCP, Ubuntu servers continued using `systemd-resolved` which listens on `127.0.0.53:53`, bypassing the router's DNS settings.
-
-#### Solution for Standard Ubuntu Servers
-Modified `/etc/systemd/resolved.conf` on each Ubuntu machine:
-```conf
-[Resolve]
-DNS=192.168.0.150 1.1.1.1
-FallbackDNS=8.8.8.8
-DNSStubListener=yes
-Domains=home.kannepally.me
-```
-
-#### Special Case: DNS Server Host (k-worker2-large)
-The machine hosting the Bind9 container required additional configuration to avoid port 53 conflicts:
-
-**Problem**: DNSStubListener conflicts with Bind9 container port binding
-**Solution**: 
-1. Set `DNSStubListener=no` in `/etc/systemd/resolved.conf`
-2. Point DNS to localhost (`127.0.0.1`) since Bind9 runs locally
-3. Update `/etc/resolv.conf` to use the actual DNS resolver
-
-### Port 53 Binding Issues
-- **Issue**: systemd-resolved occupying port 53 prevented Docker container from binding
-- **Resolution**: Disabled DNSStubListener on the DNS server host
-- **Verification**: Confirmed Docker container can bind to port 53 successfully
 
 ## Testing and Verification
 
@@ -259,17 +234,12 @@ ping k-worker2-large.home.kannepally.me
 ## Current Service Hostname Mapping
 
 ### Active Services
-- **Jenkins**: `jenkins.home.kannepally.me` → 192.168.0.110 or 192.168.0.150 or. 192.168.0.200 (Kubernetes ingress)
 - **DNS Server**: `dns.home.kannepally.me` → 192.168.0.150
-- **K3s Master**: `k3s-master.home.kannepally.me` → 192.168.0.110
+- **K3s Master**: `k8s-control-plane.home.kannepally.me` → 192.168.0.110
 - **Worker Nodes**: 
   - `k-worker1-mini.home.kannepally.me` → 192.168.0.200
   - `k-worker2-large.home.kannepally.me` → 192.168.0.150
 
-### Migration from Manual Configuration
-- **Before**: Manual `/etc/hosts` entries for `jenkins.local`
-- **After**: Automatic DNS resolution via `jenkins.home.kannepally.me`
-- **Benefits**: No more manual host file management across the network
 
 ## Router Configuration Details
 
@@ -296,8 +266,9 @@ docker ps | grep bind9-dns
 # View container logs
 docker logs bind9-dns
 
-# Restart container if needed
-docker restart bind9-dns
+# When changed DNS configuration to reflect changes
+docker compose down
+docker compose up -d
 ```
 
 ### DNS Server Health
@@ -343,41 +314,13 @@ sudo nano /opt/bind9/zones/home-kannepally-me.zone
 docker exec bind9-dns rndc reload home.kannepally.me
 ```
 
-
-
-
-## Implementation Notes
-
-
-
-## References
-
-- [Bind9 Official Documentation](https://bind9.readthedocs.io/)
-- [Docker Bind9 Container Guide](https://hub.docker.com/r/internetsystemsconsortium/bind9)
-- [DNS Best Practices for Home Labs](https://example.com/homelab-dns)
-
 ## Future Enhancements
-
-### Completed ✅
-- **Domain Acquisition**: kannepally.me purchased from Namecheap
-- **Bind9 Container Deployment**: Successfully deployed on k-worker2-large
-- **Local DNS Resolution**: home.kannepally.me zone operational
-- **Network Integration**: TP-Link router configured, all devices using local DNS
-- **Service Integration**: Jenkins accessible via jenkins.home.kannepally.me
-
-### Planned Enhancements
 - **External Domain Integration**: Configure public access routing for selected services
 - **SSL Certificate Automation**: Let's Encrypt integration for TLS certificates
 - **DNS over HTTPS (DoH)**: Secure DNS queries
 - **Load Balancing**: Multiple DNS servers for redundancy
 - **Dynamic DNS Updates**: Automatic service discovery and registration
 - **Additional Services**: Expand zone file with more HomeLab services
-
-## Implementation Notes
-
-> **Status**: ✅ **COMPLETED**
-> 
-> The DNS server is fully operational and serving the local network. All machines now resolve internal services via the home.kannepally.me domain without manual /etc/hosts configuration.
 
 **Key Achievements:**
 - Eliminated manual /etc/hosts management across the network
