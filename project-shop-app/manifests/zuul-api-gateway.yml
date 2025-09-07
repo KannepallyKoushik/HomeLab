@@ -1,0 +1,97 @@
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zuul-api-gateway
+  namespace: microservices-shop-app
+  labels:
+    app: zuul-api-gateway
+spec:
+  selector:
+    matchLabels:
+      app: zuul-api-gateway
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: zuul-api-gateway
+    spec:
+      containers:
+      - name: zuul-api-gateway
+        image: kannepallykoushikkumar/zuul-api-gateway:latest
+        imagePullPolicy: Always
+        livenessProbe:
+          tcpSocket:
+            port: 9999
+          initialDelaySeconds: 20
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        env:
+        - name: OFFER_SERVICE
+          value: "offer-service"
+        - name: OFFER_SERVICE_PORT
+          value: "1001"
+        - name: SHOE_SERVICE
+          value: "shoes-service"
+        - name: SHOE_SERVICE_PORT
+          value: "1002"
+        - name: WISHLIST_SERVICE
+          value: "wishlist-service"
+        - name: WISHLIST_SERVICE_PORT
+          value: "1003"
+        - name: CART_SERVICE
+          value: "cart-service"
+        - name: CART_SERVICE_PORT
+          value: "1004"
+        ports:
+        - containerPort: 9999
+          name: gateway-port
+      restartPolicy: Always
+---
+
+# https://kubernetes.io/docs/concepts/services-networking/service/
+apiVersion: v1
+kind: Service
+metadata:
+  name: zuul-api-gateway
+  namespace: microservices-shop-app
+spec:
+  selector:
+    app: zuul-api-gateway
+  type: NodePort
+  ports:
+  - name: gateway-port
+    protocol: TCP
+    port: 9999
+    targetPort: 9999
+    nodePort: 30099
+---
+
+# https://kubernetes.io/docs/concepts/services-networking/ingress/
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-gateway-ingress
+  namespace: microservices-shop-app
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+  - host: api-gateway.kannepally.me
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: zuul-api-gateway
+            port:
+              number: 9999
+---

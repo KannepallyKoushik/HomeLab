@@ -1,0 +1,89 @@
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui-web-app-reactjs
+  namespace: microservices-shop-app
+  labels:
+    app: ui-web-app-reactjs
+spec:
+  selector:
+    matchLabels:
+      app: ui-web-app-reactjs
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: ui-web-app-reactjs
+    spec:
+      containers:
+      - name: ui-web-app-reactjs
+        image: kannepallykoushikkumar/ui-web-app-reactjs:latest
+        imagePullPolicy: Always
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        env:
+        - name: API_PORT
+          value: "8080"
+        - name: DEV_SERVER_PORT
+          value: "8080"
+        - name: APIGatewayIP
+          value: "192.168.0.200"
+        - name: APIGatewayPort
+          value: "9999"
+        ports:
+        - containerPort: 8080
+          name: ui-reactjs
+      restartPolicy: Always
+---
+
+# https://kubernetes.io/docs/concepts/services-networking/service/
+apiVersion: v1
+kind: Service
+metadata:
+  name: ui-service
+  namespace: default
+spec:
+  selector:
+    app: ui-web-app-reactjs
+  type: NodePort
+  ports:
+  - name: ui-reactjs
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+    nodePort: 30080
+---
+
+# https://kubernetes.io/docs/concepts/services-networking/ingress/
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shopapp-ui-ingress
+  namespace: microservices-shop-app
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+  - host: ui-shopapp.kannepally.me
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ui-service
+            port:
+              number: 8080
+---
