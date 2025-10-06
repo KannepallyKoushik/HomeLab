@@ -1,0 +1,65 @@
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart-microservices-nodejs
+  namespace: microservices-shop-app
+  labels:
+    app: cart-microservices-nodejs
+spec:
+  selector:
+    matchLabels:
+      app: cart-microservices-nodejs
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: cart-microservices-nodejs
+    spec:
+      containers:
+      - name: cart-microservices-nodejs
+        image: kannepallykoushikkumar/cart-microservice-nodejs:latest
+        imagePullPolicy: Always
+        livenessProbe:
+          tcpSocket:
+            port: 1004
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        env:
+        - name: PORT
+          value: "1004"
+        ports:
+        - containerPort: 1004
+          name: cart-ms-nodejs
+      restartPolicy: Always
+
+
+---
+
+# https://kubernetes.io/docs/concepts/services-networking/service/
+apiVersion: v1
+kind: Service
+metadata:
+  name: cart-service
+  namespace: microservices-shop-app
+spec:
+  selector:
+    app: cart-microservices-nodejs
+  # type: NodePort
+  type: ClusterIP
+  ports:
+  - name: cart-ms-nodejs
+    protocol: TCP
+    port: 1004
+    targetPort: 1004
+    # nodePort: 30004
+---
+

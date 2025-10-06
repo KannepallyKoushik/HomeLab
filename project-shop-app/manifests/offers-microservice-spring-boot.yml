@@ -1,0 +1,61 @@
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: offers-microservice-spring-boot
+  namespace: microservices-shop-app
+  labels:
+    app: offers-microservice-spring-boot
+spec:
+  selector:
+    matchLabels:
+      app: offers-microservice-spring-boot
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: offers-microservice-spring-boot
+    spec:
+      containers:
+        - name: offers-microservice-spring-boot
+          image: kannepallykoushikkumar/offers-microservice-spring-boot:latest
+          imagePullPolicy: Always
+          livenessProbe:
+            tcpSocket:
+              port: 1001
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+            periodSeconds: 10
+          env:
+          - name: Dummy
+            value: "Y"
+          ports:
+          - containerPort: 1001
+            name: offers-ms
+      restartPolicy: Always
+---
+
+# https://kubernetes.io/docs/concepts/services-networking/service/
+apiVersion: v1
+kind: Service
+metadata:
+  name: offers-service
+  namespace: microservices-shop-app
+spec:
+  selector:
+    app: offers-microservice-spring-boot
+  type: ClusterIP
+  ports:
+  - name: offers-ms
+    protocol: TCP
+    port: 1001
+    targetPort: 1001
+    # nodePort: 30001
+---
