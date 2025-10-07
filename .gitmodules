@@ -1,0 +1,3 @@
+[submodule "infra/k3s-cluster/kubernetes-jenkins"]
+	path = infra/k3s-cluster/kubernetes-jenkins
+	url = git@github.com:KannepallyKoushik/kubernetes-jenkins.git
