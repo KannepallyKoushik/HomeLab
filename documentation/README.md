@@ -50,7 +50,7 @@ The ultimate goal is to create a production-ready environment that serves as bot
 
 ## 📚 Documentation Structure
 
-To keep this HomeLab journey organized and reproducible, the documentation is structured in a step-by-step manner. Each major component or phase has its own dedicated guide:
+To keep this HomeLab journey organized and reproducible, the documentation is structured in the **chronological order of setup and experimentation**. Each major component or phase has its own dedicated guide, arranged to reflect the actual sequence in which the environment was built and configured:
 
 1. **[Node Inventory & Hardware Setup](./1.nodes-setup.md)**  
    Details on hardware selection, VM/physical node setup, and initial OS installation.
@@ -64,6 +64,11 @@ To keep this HomeLab journey organized and reproducible, the documentation is st
 4. **[Jenkins CI/CD Pipeline Setup](./4.jenkins-setup.md)**  
    Instructions for deploying Jenkins in Kubernetes and integrating automated pipelines.
 
+> **Note:**  
+> The documentation files are intentionally ordered to match the real-world progression of the HomeLab setup. This makes it easier to follow along, replicate the environment, or revisit specific phases as the HomeLab evolves.
 
 Each section is self-contained and can be accessed by clicking the links above.  
-This modular approach makes it easy to follow, update, and expand as the HomeLab evolves.
+This modular and sequential approach makes it easy to follow, update, and expand as the HomeLab grows.
+
+---
+*Last Updated: Oct 7, 2025*
