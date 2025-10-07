@@ -1,3 +1,3 @@
-[submodule "tools/kubernetes-jenkins"]
-	path = tools/kubernetes-jenkins
+[submodule "infra/k3s-cluster/kubernetes-jenkins"]
+	path = infra/k3s-cluster/kubernetes-jenkins
 	url = https://github.com/scriptcamp/kubernetes-jenkins.git
